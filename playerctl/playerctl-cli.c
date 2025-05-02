@@ -1151,9 +1151,29 @@ gint player_compare_func(gconstpointer a, gconstpointer b, gpointer user_data) {
     gchar *name_b = NULL;
     g_object_get(player_a, "player-name", &name_a, NULL);
     g_object_get(player_b, "player-name", &name_b, NULL);
+
+    PlayerctlPlaybackStatus status_a = INT_MAX;
+    PlayerctlPlaybackStatus status_b = INT_MAX;
+    g_object_get(player_a, "playback-status", &status_a, NULL);
+    g_object_get(player_b, "playback-status", &status_b, NULL);
+
     gint result = player_name_string_compare_func(name_a, name_b, user_data);
+
+    if (status_a < status_b) {
+        result = -1;
+        goto end;
+    }
+
+    if (status_b < status_a) {
+        result = 1;
+        goto end;
+    }
+
+end:
+
     g_free(name_a);
     g_free(name_b);
+
     return result;
 }
 
@@ -1212,7 +1232,7 @@ int main(int argc, char *argv[]) {
         goto end;
     }
 
-    if (player_names != NULL && !select_all_players) {
+    if (follow || (player_names != NULL && !select_all_players)) {
         playerctl_player_manager_set_sort_func(manager, player_compare_func, (gpointer)player_names,
                                                NULL);
     }
